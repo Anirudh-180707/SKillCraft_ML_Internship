@@ -7,62 +7,49 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report
 
 # Dataset folder
-DATASET_PATH = "archive"
+DATASET_PATH = "train"
 
 images = []
 labels = []
 
-print("Loading gesture images...")
+cat_count = 0
+dog_count = 0
 
-for user_folder in os.listdir(DATASET_PATH):
+print("Loading images...")
 
-    user_path = os.path.join(DATASET_PATH, user_folder)
+for filename in os.listdir(DATASET_PATH):
 
-    if not os.path.isdir(user_path):
-        continue
+    filepath = os.path.join(DATASET_PATH, filename)
 
-    for gesture_folder in os.listdir(user_path):
+    if filename.startswith("cat"):
 
-        gesture_path = os.path.join(user_path, gesture_folder)
+        img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
 
-        if not os.path.isdir(gesture_path):
-            continue
-
-        label = gesture_folder
-
-        image_count = 0
-
-        for image_file in os.listdir(gesture_path):
-
-            image_path = os.path.join(gesture_path, image_file)
-
-            img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-
-            if img is None:
-                continue
-
-            # Resize image
+        if img is not None:
             img = cv2.resize(img, (64, 64))
-
-            # Convert image to feature vector
             images.append(img.flatten())
+            labels.append(0)
+            cat_count += 1
 
-            # Store label
-            labels.append(label)
+    elif filename.startswith("dog"):
 
-            image_count += 1
+        img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
 
-            # Limit images per gesture for faster training
-            if image_count >= 100:
-                break
+        if img is not None:
+            img = cv2.resize(img, (64, 64))
+            images.append(img.flatten())
+            labels.append(1)
+            dog_count += 1
 
-print(f"\nTotal Images Loaded: {len(images)}")
+print(f"\nCat Images: {cat_count}")
+print(f"Dog Images: {dog_count}")
+print(f"Total Images: {cat_count + dog_count}")
 
-# Convert to NumPy arrays
+# Convert to NumPy Arrays
 X = np.array(images)
 y = np.array(labels)
 
-# Split Dataset
+# Train-Test Split
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,

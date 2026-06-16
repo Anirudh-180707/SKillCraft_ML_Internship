@@ -7,45 +7,58 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report
 
 # Dataset folder
-DATASET_PATH = "train"
+DATASET_PATH = "archive"
 
 images = []
 labels = []
 
-cat_count = 0
-dog_count = 0
+print("Loading gesture images...")
 
-print("Loading images...")
+for user_folder in os.listdir(DATASET_PATH):
 
-for filename in os.listdir(DATASET_PATH):
+    user_path = os.path.join(DATASET_PATH, user_folder)
 
-    filepath = os.path.join(DATASET_PATH, filename)
+    if not os.path.isdir(user_path):
+        continue
 
-    if filename.startswith("cat"):
+    for gesture_folder in os.listdir(user_path):
 
-        img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+        gesture_path = os.path.join(user_path, gesture_folder)
 
-        if img is not None:
+        if not os.path.isdir(gesture_path):
+            continue
+
+        label = gesture_folder
+
+        image_count = 0
+
+        for image_file in os.listdir(gesture_path):
+
+            image_path = os.path.join(gesture_path, image_file)
+
+            img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+
+            if img is None:
+                continue
+
+            # Resize image
             img = cv2.resize(img, (64, 64))
+
+            # Convert image to feature vector
             images.append(img.flatten())
-            labels.append(0)
-            cat_count += 1
 
-    elif filename.startswith("dog"):
+            # Store label
+            labels.append(label)
 
-        img = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+            image_count += 1
 
-        if img is not None:
-            img = cv2.resize(img, (64, 64))
-            images.append(img.flatten())
-            labels.append(1)
-            dog_count += 1
+            # Limit images per gesture for faster training
+            if image_count >= 100:
+                break
 
-print(f"\nCat Images: {cat_count}")
-print(f"Dog Images: {dog_count}")
-print(f"Total Images: {cat_count + dog_count}")
+print(f"\nTotal Images Loaded: {len(images)}")
 
-# Convert to NumPy Arrays
+# Convert to NumPy arrays
 X = np.array(images)
 y = np.array(labels)
 
@@ -61,6 +74,7 @@ print("\nTraining SVM Model...")
 
 # Train SVM
 model = SVC(kernel="linear")
+
 model.fit(X_train, y_train)
 
 print("Making Predictions...")
